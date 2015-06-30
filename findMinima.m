@@ -17,9 +17,6 @@ function [ minima ] = findMinima( apf )
 % threshold for color tolerance
 threshold = 0.1;
 
-% numerical differentiation
-%[FY,FX] = gradient(apf);
-
 % apply threshold on apf to get rid of background
 apf_bw = im2bw(1-apf, threshold);
 

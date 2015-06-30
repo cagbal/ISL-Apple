@@ -11,6 +11,13 @@ sal_map = TDApple(I);
 
 minima = findMinima(sal_map);
 
-findPath(sal_map, minima, 500, 25);
+% threshold for distance of two minima
+threshold_minima = 100;
+
+% preprocessing 
+minima = removeDuplicateMinimum( minima, threshold_minima );
+
+[apf_modified, path,  fixation_points] = ...
+    findPath(sal_map, minima, 500, 50, 45, I);
 
 toc

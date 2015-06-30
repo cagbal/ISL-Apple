@@ -1,4 +1,6 @@
-function [ apf_modified, path ] = findPath( apf, minima, x, y )
+function [ apf_modified, path,  fixation_points] = findPath( apf,...
+    minima, x, y,...
+    sigma, I )
 %findPATH modifies the APF by multiplying it with a 2D Gaussian
 %   2D Gaussian is used to get a clear path between objects with respect
 %   to their distance to current fovea.
@@ -18,8 +20,6 @@ function [ apf_modified, path ] = findPath( apf, minima, x, y )
 %                           Bogazici University                           %                        %
 %                                25.06.2015                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% sigma
-sigma = 25;
 
 % initialize
 apf_modified = zeros(size(apf, 1), size(apf,2));
@@ -44,11 +44,12 @@ end
 
 
  figure
- imagesc(apf_modified);
- title('modified APF')
+ imagesc(I);
+% title('modified APF')
+%
+%
+ hold on
 
-
-hold on
 i = 0;
 while(1)
     % Optimization
@@ -58,51 +59,62 @@ while(1)
     dx = 2*sign(FX(round(y),round(x)));
     dy = 2*sign(FY(round(y),round(x)));
     
+    % if energy function is stuck
+    if dx == 0 && dy == 0
+        dx = 2*sign(~(x > size(FX,2)/2)-0.5);
+        dy = 2*sign(~(y > size(FX,1)/2)-0.5);
+    elseif i > 4 
+        if path(end - 3) == path(end-1) 
+            dx = dx_prev;
+            dy = dy_prev;
+        elseif norm([FX(round(y),round(x)) FY(round(y),round(x))]) < 10e-19
+            dx = 2*sign(~(x > size(FX,2)/2)-0.5);
+            dy = 2*sign(~(y > size(FX,1)/2)-0.5);
+        end
+    end
+   
     % update the coordinates
     x = x + dx;
     y = y + dy;
     
     % add new coordinates to path
     path = [path; x,y];
-    
-    
     %imagesc(apf_modified);
-    %title('modified APF')
+    %title('modified APF');
+    
+    hold on
+    
+    plot(x,y,'b.', 'MarkerSize', 4)
+    
     %hold off
-    
-    %hold on
-    
-    plot(x,y,'r.')
     
     i = i + 1;
     
-    % control the end of the algorithm
-    if (i >= 3)
-        if ((path(end, 1) == path(end-2,1)) && ...
-                (path(end, 2) == path(end-2,2)))
+    for j = 1 : length(minima)
+        if norm([x y]' - minima(j).Centroid') < 5
             
-            % a new fixation point is found
             
-            % prevent double hit to a same fixation point
-            if (~ismember( [x-40:x+40; y-40:y+40 ]',fixation_points, 'rows' ))
-                
+            if (~ismember( [minima(j).Centroid(1), minima(j).Centroid(2) ],...
+                    fixation_points, 'rows' ))
                 % inhibit it by subtracting a 2D Gaussian
                 % and try to search a new fixation point
                 % calculate the 2D gaussian
-                gauss = gaussian(a, b, x, y, sigma);
+                gauss = gaussian(a, b,...
+                    minima(j).Centroid(1), minima(j).Centroid(2), sigma);
                 
                 % subtract the gaussian
                 apf_modified = apf_modified - gauss;
                 
                 % add new fixation points to database
-                fixation_points = [fixation_points; x, y];
+                fixation_points = [fixation_points;...
+                    minima(j).Centroid(1), minima(j).Centroid(2)];
             end
-            
-            
         end
     end
     
-    
+    % save the previous dx and dy values
+    dx_prev = dx;
+    dy_prev = dy;
 end
 
 end

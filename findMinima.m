@@ -31,9 +31,9 @@ CC = bwconncomp(1- apf_bw);
 minima = regionprops(CC,'Centroid');
 
 % this will be commended out
-imagesc(apf_bw);
+%imagesc(apf_bw);
 
-title('Threshold APF');
+%title('Threshold APF');
 
 end
 

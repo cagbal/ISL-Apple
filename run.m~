@@ -4,12 +4,29 @@ clc
 
 tic 
 
- I = imread('483454389_3b90aa495d_b.jpg');
+% threshold for distance of two minima
+threshold_minima = 30; %100
+
+% disk size of closing operation
+disk_size = 1; % 5
+
+% sigma of Gaussians
+sigma = 45; 
+
+I = imread('BrimmingAppleTree.jpg');
+
+% Resize the image because the algorithm is optimized for 1024x768 images
+I = imresize(I,size(I,1) );
+
 
 sal_map = TDApple(I); 
 
-minima = findMinima(sal_map);
+minima = findMinima(sal_map, disk_size);
 
-findPath(sal_map, minima);
+% preprocessing 
+minima = removeDuplicateMinimum( minima, threshold_minima );
+
+[apf_modified, path,  fixation_points] = ...
+    findPath(sal_map, minima, 500, 50, sigma, I);
 
 toc

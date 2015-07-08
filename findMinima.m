@@ -1,4 +1,4 @@
-function [ minima ] = findMinima( apf )
+function [ minima ] = findMinima( apf, disk_size )
 %findMinima find local minimum points on artificial potential function
 % by using morphological operations
 %Input:
@@ -21,19 +21,19 @@ threshold = 0.1;
 apf_bw = im2bw(1-apf, threshold);
 
 % open the image
-se = strel('disk',5);
+se = strel('disk',disk_size);
 apf_bw = imclose(apf_bw, se);
 
 % get the Connected Components of image
 CC = bwconncomp(1- apf_bw);
 
 % get the centroids of CC
-minima = regionprops(CC,'Centroid');
+minima = regionprops(CC,'Centroid', 'Area');
 
 % this will be commended out
-%imagesc(apf_bw);
+imagesc(apf_bw);
 
-%title('Threshold APF');
+title('Threshold APF');
 
 end
 

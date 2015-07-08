@@ -9,6 +9,10 @@ function [ minima ] = removeDuplicateMinimum( minima, threshold )
 %                           Bogazici University                           %                        %
 %                                25.06.2015                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
 %*****************************NEEDS OPTIMIZATION***************************
 
 j = 1;

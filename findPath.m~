@@ -1,6 +1,7 @@
-function [ apf_modified, path,  fixation_points] = findPath( apf,...
+function [ apf_modified, path,  fixation_points ,I_fix] = ...
+    findPath( apf,...
     minima, x, y,...
-    sigma, I )
+    sigma, gamma_usr, iter_limit, I )
 %findPATH modifies the APF by multiplying it with a 2D Gaussian
 %   2D Gaussian is used to get a clear path between objects with respect
 %   to their distance to current fovea.
@@ -9,9 +10,13 @@ function [ apf_modified, path,  fixation_points] = findPath( apf,...
 % minima : centroids of contours
 % initial x
 % initial y
+% sigma : variance of Gaussian
+% gamma_usr : learning rate
+% iter_limit: iteration limit
 % Output:
 % modified_apf
 % path : path to follow
+% I_fix : fixation point images
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                             Cagatay Odabasi                             %
@@ -44,36 +49,62 @@ for i = 1 : length(minima)
 end
 
 
- figure
- imagesc(apf_modified);
-% imagesc(I);
+% figure
+% imagesc(apf_modified);
+ imagesc(I);
 % title('modified APF')
 %
 %
-hold on
+
+%axis off
+
+%hold on
+
+% set gamma as user desired value
+gamma = gamma_usr;
 
 i = 0;
-while(1)
+l = 1;
+while(1) 
+    %tic
+    
+    % check iteration limit
+    if i > iter_limit
+        break;
+    end
+    
     % Optimization
     [FX, FY] = gradient(apf_modified);
     
     % calculate the difference of x and y
-    dx = 2*sign(FX(round(y),round(x)));
-    dy = 2*sign(FY(round(y),round(x)));
+    dx = gamma*2*sign(FX(round(y),round(x)));
+    dy = gamma*2*sign(FY(round(y),round(x)));
     
     % if energy function is stuck
     if dx == 0 && dy == 0
         dx = 2*sign(~(x > size(FX,2)/2)-0.5);
         dy = 2*sign(~(y > size(FX,1)/2)-0.5);
     elseif i > 4 
-        if path(end - 3) == path(end-1) 
-            dx = dx_prev;
-            dy = dy_prev;
+        if sum(path(end - 3,:) == path(end-1,:)) == 2 
+            % random jump from local minima
+            dx = randi([-30 30], 1, 1);
+            dy = randi([-30 30], 1, 1);
         elseif norm([FX(round(y),round(x)) FY(round(y),round(x))]) < 10e-19
             dx = 2*sign(~(x > size(FX,2)/2)-0.5);
-            dy = 2*sign(~(y > size(FX,1)/2)-0.5);  end
+            dy = 2*sign(~(y > size(FX,1)/2)-0.5);
+        else
+            % set gamma as user desired value
+            gamma = gamma_usr;
+        end
     end
-   
+    
+    % protect the boundaries 
+    if x + dx > size(FX,2) || x + dx < 1
+        dx = 0;
+    elseif y + dy > size(FX,1) || y + dy < 1
+        dy = 0;
+    end
+    
     % update the coordinates
     x = x + dx;
     y = y + dy;
@@ -85,7 +116,7 @@ while(1)
     
     hold on
     
-    plot(x,y,'b.', 'MarkerSize', 4)
+    plot(x,y,'b.', 'MarkerSize', 6)
     
     %hold off
     
@@ -113,14 +144,40 @@ while(1)
                 % Draw a rectangle 
                 rectangle('Position',...
                     [fixation_points(end,1) - 20,...
-                    fixation_points(end,2) - 20, 40 40]);
+                    fixation_points(end,2) - 20, 40 40]); 
+                
+                % check for boundaries
+                if ~(fixation_points(end,2) - 20 < 0 || ...
+                       fixation_points(end,2) + 20 > size(I,2) || ...
+                       fixation_points(end,1) - 20 < 0 || ...
+                       fixation_points(end,1) + 20 > size(I,1))
+                
+                % Snap a photo of apple 
+                 I_magnified(:,:,:) =...
+                    I(fixation_points(end,2) - 20 : fixation_points(end,2) + 20, ...
+                   fixation_points(end,1) - 20 : fixation_points(end,1) + 20, : );
+                
+               % store them in a struct
+                I_fix{l} = ...
+                    imresize(I_magnified(:,:,:),size(I,1)/40);
+                
+                l = l + 1;
+                
+                end
             end
         end
     end
     
+    % for animation
+    %i
+    drawnow
+    pause(0.001); 
+    
     % save the previous dx and dy values
     dx_prev = dx;
     dy_prev = dy;
+    
+    %toc
 end
 
 end

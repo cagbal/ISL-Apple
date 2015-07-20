@@ -4,7 +4,7 @@ function [ I_out ] = divideImage( I, opt)
 %
 % Input:
 % I: Image
-% opt: option can be 'four'
+% opt: option can be , 'one', 'four'
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                             Cagatay Odabasi                             %
@@ -31,6 +31,10 @@ if strcmp(opt, 'four')
     I_out(:,:,:,2) = imresize(I_tmp(:,:,:,2),size(I,1)/size(I_tmp,1));
     I_out(:,:,:,3) = imresize(I_tmp(:,:,:,3),size(I,1)/size(I_tmp,1));
     I_out(:,:,:,4) = imresize(I_tmp(:,:,:,4),size(I,1)/size(I_tmp,1));
+    
+elseif strcmp(opt, 'one')
+    % do nothing
+    I_out = I;
 end
 
 end
